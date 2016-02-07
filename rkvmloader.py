@@ -29,11 +29,14 @@ import time
 qemu_host = 'qemu:///system'
 
 def print_v(message, *args, **kwargs):
-    if arguments['--verbose']: print(message, *args, **kwargs)
+    if arguments['--verbose']:
+        print(message, *args, **kwargs)
+    if kwargs.get('end', '\n') == '':
+        sys.stdout.flush()
 
 
 def qemu_connect():
-    print_v("(I) Connecting to %s" % qemu_host)
+    print_v("(I) Connecting to %s..." % qemu_host, end='')
 
     conn = libvirt.open(qemu_host)
 
@@ -41,6 +44,7 @@ def qemu_connect():
         print('(E) Failed to connect to qemu:///system', file=sys.stderr)
         exit(1)
 
+    print_v('Done.')
     return conn
 
 
@@ -82,28 +86,31 @@ def start_vm(conn, host_name):
 
     waitfor = config[host_name]['waitfor'].split(':')
     up = False
+    ip = ''
+
     if host_name in [conn.lookupByID(x).name() for x in conn.listDomainsID()]:
         print_v('(I) Host %s already running' % host_name)
     else:
         print_v("(I) Starting %s " % (host_name,))
         conn.lookupByName(host_name).create()
-        mac_list = determine_host_macs(conn, host_name)
-        print_v("(I) Waiting for ARP cache to be filled... ", end="")
-        sys.stdout.flush()
-        while not up:
 
-            for mac in mac_list:
-                cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-                output, errors = p.communicate()
-                if output != b'':
-                    ip = output.decode('UTF-8').strip('\n')
-                    print("Found %s" % ip)
-                    up = True
-            time.sleep(1)
+    mac_list = determine_host_macs(conn, host_name)
+    print_v("(I) Waiting for ARP cache to be filled... ", end="")
 
+    while not up:
+
+        for mac in mac_list:
+            cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output, errors = p.communicate()
+            if output != b'':
+                ip = output.decode('UTF-8').strip('\n')
+                print("Found %s" % ip)
+                up = True
+        time.sleep(1)
+
+    if waitfor[0] != 'PASS' and waitfor[1] != 'PASS':
         print_v("(I) Checking %s port %s on %s... " % (waitfor[0], waitfor[1], ip), end="")
-        sys.stdout.flush()
 
         connected = False
         sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -113,8 +120,10 @@ def start_vm(conn, host_name):
             else:
                 connected = True
                 print_v('Connection succeeded.', end="\n")
+    else:
+        print_v('(I) Skipping connection test. IP address fine enough.')
 
-        print_v("Done booting %s" % host_name)
+    print_v("(I) Done booting %s" % host_name)
 
 
 
@@ -138,5 +147,11 @@ if __name__ == "__main__":
             if host not in [conn.lookupByID(x).name() for x in rvmids]:
                 print_v('(I) Host %s already stopped' % host)
             else:
-                print_v('(I) Stopping %s' % host)
-
+                up = True
+                vm = conn.lookupByName(host).shutdown()
+                print_v('(I) Stopping %s...' % host, end='')
+                while up:
+                    if conn.lookupByName(host) is None:
+                        up = False
+                    time.sleep(1)
+                print_v('Done', end='\n')
