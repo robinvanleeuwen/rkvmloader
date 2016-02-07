@@ -109,7 +109,7 @@ def start_vm(conn, host_name):
                 up = True
         time.sleep(1)
 
-    if waitfor[0] != 'PASS' and waitfor[1] != 'PASS':
+    if waitfor[0] != 'PASS':
         print_v("(I) Checking %s port %s on %s... " % (waitfor[0], waitfor[1], ip), end="")
 
         connected = False
