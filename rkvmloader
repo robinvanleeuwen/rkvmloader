@@ -163,7 +163,11 @@ if __name__ == "__main__":
                     i = i + 1
                     time.sleep(1)
                     if i == int(arguments['--timeout']):
-                        conn.lookupByName(host).destroy()
+                        print_v(" Timeout, force kill!", end="")
+                        try:
+                            conn.lookupByName(host).destroy()
+                        except:
+                            pass
                         break
                 running_vm_ids.pop(0)
-                print_v('Done', end='\n')
+                print_v(' Done', end='\n')
