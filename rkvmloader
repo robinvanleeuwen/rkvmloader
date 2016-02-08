@@ -154,14 +154,13 @@ if __name__ == "__main__":
                 print_v('(I) Host %s already stopped' % host)
             else:
                 up = True
-                conn.lookupByName(host).shutdown()
-                print_v('(I) Stopping %s...' % host, end='')
                 i = 0
+                print_v('(I) Stopping %s...' % host, end='')
+                conn.lookupByName(host).shutdown()
+
                 while up:
                     if conn.lookupByName(host).state()[0] == 5:
                         break
-                    i = i + 1
-                    time.sleep(1)
                     if i == int(arguments['--timeout']):
                         print_v(" Timeout, force kill!", end="")
                         try:
@@ -169,5 +168,8 @@ if __name__ == "__main__":
                         except:
                             pass
                         break
+                    i = i + 1
+                    time.sleep(1)
+
                 running_vm_ids.pop(0)
                 print_v(' Done', end='\n')
