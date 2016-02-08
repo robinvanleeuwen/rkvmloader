@@ -8,7 +8,7 @@ timeout (default 30 sec).
 
 Usage:
     rkvmloader start [-c <file>] [-v]
-    rkvmloader stop [-c <file>] [-v] [-t <sec>]
+    rkvmloader stop [-c <file>] [-v] [-t <sec>] [--force]
     rkvmloader (-h | --help)
     rkvmloader --version
 
@@ -158,7 +158,10 @@ if __name__ == "__main__":
                 up = True
                 i = 0
                 print_v('(I) Stopping %s...' % host, end='')
-                conn.lookupByName(host).shutdown()
+                if arguments['--force']:
+                    conn.lookupByName(host).destroy()
+                else:
+                    conn.lookupByName(host).shutdown()
 
                 while up:
                     if conn.lookupByName(host).state()[0] == 5:
