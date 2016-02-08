@@ -6,28 +6,32 @@ sequence. By default domains will be gracefully shutdown.
 
 Usage:
     rkvmloader start [-c <file>] [-v]
-    rkvmloader stop [-c <file>] [-v]
+    rkvmloader stop [-c <file>] [-v] [-t <sec>]
     rkvmloader (-h | --help)
     rkvmloader --version
+
 
 Options:
   -v --verbose          Be Verbose
   -h --help             Show this screen
   -c --config=<config>  Configuration file [default: /etc/rkvmloader.conf]
-  --force               Forcefully kill VM's
+  --force               Forcefully kill VM's immidiately
+  -t --timeout=<sec>    Force off after <sec> seconds [default: 30]
+
 """
+
+# Builtin
 import socket
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 import time
 
+# Libraries
 import docopt
 import configparser
 import libvirt
 
-
-qemu_host = 'qemu:///system'
 
 def print_v(message, *args, **kwargs):
     if arguments['--verbose']:
@@ -36,13 +40,13 @@ def print_v(message, *args, **kwargs):
         sys.stdout.flush()
 
 
-def qemu_connect():
+def qemu_connect(qemu_host="qemu:///system"):
     print_v("(I) Connecting to %s..." % qemu_host, end='')
 
     conn = libvirt.open(qemu_host)
 
     if conn is None:
-        print('(E) Failed to connect to qemu:///system', file=sys.stderr)
+        print('(E) Failed to connect to %s' % qemu_host, file=sys.stderr)
         exit(1)
 
     print_v('Done.')
@@ -130,10 +134,11 @@ def start_vm(conn, host_name):
 
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version="RKVMLoader 0.1")
+
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
-    rvmids = conn.listDomainsID()
-    print_v("(I) Running VM id's: %s" % rvmids)
+    running_vm_ids = conn.listDomainsID()
+    print_v("(I) Running VM id's: %s" % running_vm_ids)
 
     if arguments['start']:
         sequence = config['hosts']['sequence'].split(',')
@@ -145,14 +150,20 @@ if __name__ == "__main__":
         sequence = [ x for x in reversed(config['hosts']['sequence'].split(','))]
         print_v("(I) Stopping VM's in sequence %s" % sequence)
         for host in sequence:
-            if host not in [conn.lookupByID(x).name() for x in rvmids]:
+            if host not in [conn.lookupByID(x).name() for x in running_vm_ids]:
                 print_v('(I) Host %s already stopped' % host)
             else:
                 up = True
-                vm = conn.lookupByName(host).shutdown()
+                conn.lookupByName(host).shutdown()
                 print_v('(I) Stopping %s...' % host, end='')
+                i = 0
                 while up:
-                    if conn.lookupByName(host) is None:
-                        up = False
+                    if conn.lookupByName(host).state()[0] == 5:
+                        break
+                    i = i + 1
                     time.sleep(1)
+                    if i == int(arguments['--timeout']):
+                        conn.lookupByName(host).destroy()
+                        break
+                running_vm_ids.pop(0)
                 print_v('Done', end='\n')
