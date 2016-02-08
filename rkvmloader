@@ -5,10 +5,10 @@ RKVMLoader loads KVM Virtual Machines in a predefined
 sequence. By default domains will be gracefully shutdown.
 
 Usage:
-    rkvmloader.py start [-c <file>] [-v]
-    rkvmloader.py stop [-c <file>] [-v]
-    rkvmloader.py (-h | --help)
-    rkvmloader.py --version
+    rkvmloader start [-c <file>] [-v]
+    rkvmloader stop [-c <file>] [-v]
+    rkvmloader (-h | --help)
+    rkvmloader --version
 
 Options:
   -v --verbose          Be Verbose
@@ -18,13 +18,14 @@ Options:
 """
 import socket
 import subprocess
+import sys
+import xml.etree.ElementTree as ET
+import time
 
 import docopt
 import configparser
 import libvirt
-import sys
-import xml.etree.ElementTree as ET
-import time
+
 
 qemu_host = 'qemu:///system'
 
