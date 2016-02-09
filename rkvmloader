@@ -140,7 +140,7 @@ if __name__ == "__main__":
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
     running_vm_ids = conn.listDomainsID()
-    print_v('(I) Running VM id's: %s' % running_vm_ids)
+    print_v("(I) Running VM id's: %s" % running_vm_ids)
 
     if arguments['start']:
         sequence = config['hosts']['sequence'].split(',')
