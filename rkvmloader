@@ -35,6 +35,10 @@ import configparser
 import libvirt
 
 
+def get_running_vms(conn):
+    return [conn.lookupByID(x).name() for x in conn.listDomainsID()]
+
+
 def print_v(message, *args, **kwargs):
     if arguments['--verbose']:
         print(message, *args, **kwargs)
@@ -49,7 +53,7 @@ def qemu_connect(qemu_host="qemu:///system"):
 
     if conn is None:
         print('(E) Failed to connect to %s' % qemu_host, file=sys.stderr)
-        exit(1)
+        close_and_exit(1)
 
     print_v('Done.')
     return conn
@@ -96,7 +100,7 @@ def start_vm(conn, host_name):
     up = False
     ip = ''
 
-    if host_name in [conn.lookupByID(x).name() for x in conn.listDomainsID()]:
+    if host_name in get_running_vms(conn):
         print_v('(I) Host %s already running' % host_name)
     else:
         print_v("(I) Starting %s " % (host_name,))
@@ -136,7 +140,7 @@ def start_vm(conn, host_name):
 
 
 def stop_vm(conn, host):
-    if host not in [conn.lookupByID(x).name() for x in conn.listDomainsID()]:
+    if host not in get_running_vms(conn):
         print_v('Host already stopped.')
     else:
         up = True
@@ -165,7 +169,13 @@ def stop_vm(conn, host):
 
 def show_overview(conn):
     print_v("(I) Running VM id's: %s" % conn.listDomainsID())
-    print_v("(I) Running VM names: %s" % [conn.lookupByID(x).name() for x in conn.listDomainsID()])
+    print_v("(I) Running VM names: %s" % get_running_vms(conn))
+
+
+def close_and_exit(conn):
+    print_v("(I) Closing connection.")
+    conn.close()
+    sys.exit(1)
 
 
 if __name__ == "__main__":
@@ -174,7 +184,6 @@ if __name__ == "__main__":
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
     show_overview(conn)
-    sys.exit(1)
 
     if arguments['start']:
         sequence = config['hosts']['sequence'].split(',')
@@ -187,3 +196,5 @@ if __name__ == "__main__":
         print_v("(I) Stopping VM's in sequence %s" % sequence)
         for host in sequence:
             stop_vm(conn, host)
+
+    close_and_exit(conn)
