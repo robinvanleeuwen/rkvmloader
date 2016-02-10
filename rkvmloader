@@ -4,7 +4,7 @@
 RKVMLoader loads KVM Virtual Machines in a predefined
 sequence. By default domains will initially be
 gracefully shutdown, but forcefully destroyed after a
-timeout (default 30 sec).
+timeout (default 300 sec).
 
 Usage:
     rkvmloader start [-c <file>] [-v]
@@ -18,7 +18,7 @@ Options:
   -h --help             Show this screen
   -c --config=<config>  Configuration file [default: /etc/rkvmloader.conf]
   --force               Forcefully kill VM's immidiately
-  -t --timeout=<sec>    Force off after <sec> seconds [default: 30]
+  -t --timeout=<sec>    Force off after <sec> seconds [default: 300]
 
 """
 
@@ -103,7 +103,7 @@ def load_config_file(configfile):
 
 def determine_host_macs(conn, host_name):
     mac_list = []
-    print_v("(I) Detrmining MAC's for %s..." % host_name, end='')
+    print_v("(I) Determining MAC's for %s..." % host_name, end='')
     vm_xml = conn.lookupByName(host_name).XMLDesc()
     root = ET.fromstring(vm_xml)
     for i in root.findall('./devices/interface'):
