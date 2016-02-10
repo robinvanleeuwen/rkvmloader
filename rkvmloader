@@ -116,9 +116,9 @@ def get_vm_ip(conn, host_name):
 
         if config['hosts']['probe'] != "arpwatchd":
 
-            if config['hosts']['probe'] == 'single ping':
+            if config['hosts']['probe'] == 'single-ping':
                 cmd = "ping -n 1 %s" % config[host_name]['waitfor'][0]
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                ping = subprocess.call(cmd, shell=True, stdout=subprocess.PIPE)
 
             if config['hosts']['probe'] == 'ping-sweep':
                 network = config[host_name]['waitfor'].split(":")[0]
