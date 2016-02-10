@@ -81,6 +81,10 @@ def load_config_file(configfile):
         print("(E) %s: Need to use sudo or be root for 'ping-sweep'" % configfile)
         error = True
 
+    if conf['hosts']['probe'] == 'ping-sweep' and not subprocess.call(["/usr/bin/which", "nmadp"]):
+        print("(E) The NMap utility should be installed for ping sweep.")
+        error = True
+
 
     for h in hosts:
         if h not in conf:
