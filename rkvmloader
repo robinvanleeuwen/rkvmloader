@@ -59,12 +59,13 @@ def load_config_file(configfile):
     error = False
     conf = configparser.ConfigParser()
     conf.read(configfile)
+    hosts = []
 
     try:
         hosts = conf['hosts']['sequence'].split(',')
     except KeyError:
         print("(E) %s: Couldn not find 'sequence' in section [hosts]." % configfile)
-        sys.exit(1)
+        error = True
 
     for h in hosts:
         if h not in conf:
@@ -134,13 +135,46 @@ def start_vm(conn, host_name):
 
 
 
+def stop_vm(conn, host):
+    if host not in [conn.lookupByID(x).name() for x in conn.listDomainsID()]:
+        print_v('Host already stopped.')
+    else:
+        up = True
+        i = 0
+        print_v('(I) Stopping %s...' % host, end='')
+        if arguments['--force']:
+            conn.lookupByName(host).destroy()
+        else:
+            conn.lookupByName(host).shutdown()
+
+        while up:
+            if conn.lookupByName(host).state()[0] == 5:
+                break
+            if i == int(arguments['--timeout']):
+                print_v(" Timeout, force kill!", end="")
+                try:
+                    conn.lookupByName(host).destroy()
+                except:
+                    pass
+                break
+            i = i + 1
+            time.sleep(1)
+
+        print_v(' Done', end='\n')
+
+
+def show_overview(conn):
+    print_v("(I) Running VM id's: %s" % conn.listDomainsID())
+    print_v("(I) Running VM names: %s" % [conn.lookupByID(x).name() for x in conn.listDomainsID()])
+
+
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__, version="RKVMLoader 0.1")
 
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
-    running_vm_ids = conn.listDomainsID()
-    print_v("(I) Running VM id's: %s" % running_vm_ids)
+    show_overview(conn)
+    sys.exit(1)
 
     if arguments['start']:
         sequence = config['hosts']['sequence'].split(',')
@@ -152,29 +186,4 @@ if __name__ == "__main__":
         sequence = [ x for x in reversed(config['hosts']['sequence'].split(','))]
         print_v("(I) Stopping VM's in sequence %s" % sequence)
         for host in sequence:
-            if host not in [conn.lookupByID(x).name() for x in running_vm_ids]:
-                print_v('(I) Host %s already stopped' % host)
-            else:
-                up = True
-                i = 0
-                print_v('(I) Stopping %s...' % host, end='')
-                if arguments['--force']:
-                    conn.lookupByName(host).destroy()
-                else:
-                    conn.lookupByName(host).shutdown()
-
-                while up:
-                    if conn.lookupByName(host).state()[0] == 5:
-                        break
-                    if i == int(arguments['--timeout']):
-                        print_v(" Timeout, force kill!", end="")
-                        try:
-                            conn.lookupByName(host).destroy()
-                        except:
-                            pass
-                        break
-                    i = i + 1
-                    time.sleep(1)
-
-                running_vm_ids.pop(0)
-                print_v(' Done', end='\n')
+            stop_vm(conn, host)
