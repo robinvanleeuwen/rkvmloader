@@ -93,7 +93,7 @@ def load_config_file(configfile):
 
     for h in hosts:
         if len(conf[h]['waitfor'].split(":")[0].split("/")) != 2:
-            print("[%s] waitfor-variable should be <network>:<prort> where network is CIDR-notation")
+            print("[%s] waitfor-variable should be <network>:<prort> where network is CIDR-notation" % host)
             error = True
     if error:
         sys.exit(1)
