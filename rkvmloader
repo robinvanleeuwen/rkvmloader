@@ -94,10 +94,24 @@ def determine_host_macs(conn, host_name):
     return mac_list
 
 
+def get_vm_ip(conn, host_name):
+
+    mac_list = determine_host_macs(conn, host_name)
+    for mac in mac_list:
+        cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output, errors = p.communicate()
+        if output != b'':
+            ip = output.decode('UTF-8').strip('\n')
+            print_v('(I) Found %s' % ip)
+            return ip
+        else:
+            return False
+
+
 def start_vm(conn, host_name):
 
     waitfor = config[host_name]['waitfor'].split(':')
-    up = False
     ip = ''
 
     if host_name in get_running_vms(conn):
@@ -106,23 +120,14 @@ def start_vm(conn, host_name):
         print_v('(I) Starting %s ' % (host_name,))
         conn.lookupByName(host_name).create()
 
-    mac_list = determine_host_macs(conn, host_name)
-    print_v('(I) Waiting for ARP cache to be filled... ', end='')
+    print_v('(I) Getting IP address for %s... ' % host_name)
 
-    while not up:
-
-        for mac in mac_list:
-            cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-            output, errors = p.communicate()
-            if output != b'':
-                ip = output.decode('UTF-8').strip('\n')
-                print('Found %s' % ip)
-                up = True
+    while not ip:
+        ip = get_vm_ip(conn, host_name)
         time.sleep(1)
 
-    if waitfor[0] != 'PASS':
-        print_v('(I) Checking %s port %s on %s... ' % (waitfor[0], waitfor[1], ip), end="")
+    if waitfor[1] != 'PASS':
+        print_v('(I) Checking TCP port %s on %s... ' % (waitfor[1], ip), end="")
 
         connected = False
         sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
