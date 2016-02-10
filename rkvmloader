@@ -4,7 +4,7 @@
 RKVMLoader loads KVM Virtual Machines in a predefined
 sequence. By default domains will initially be
 gracefully shutdown, but forcefully destroyed after a
-timeout (default 30 sec).
+timeout (default 300 sec).
 
 Usage:
     rkvmloader start [-c <file>] [-v]
@@ -18,7 +18,7 @@ Options:
   -h --help             Show this screen
   -c --config=<config>  Configuration file [default: /etc/rkvmloader.conf]
   --force               Forcefully kill VM's immidiately
-  -t --timeout=<sec>    Force off after <sec> seconds [default: 30]
+  -t --timeout=<sec>    Force off after <sec> seconds [default: 300]
 
 """
 
