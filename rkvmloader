@@ -23,6 +23,7 @@ Options:
 """
 
 # Builtin
+import os
 import socket
 import subprocess
 import sys
@@ -71,11 +72,25 @@ def load_config_file(configfile):
         print("(E) %s: Couldn not find 'sequence' in section [hosts]." % configfile)
         error = True
 
+    if conf['hosts']['probe'] not in ['ping-sweep', 'single-ping', 'arp-cache']:
+        print("(E) %s: [hosts] probe variable must be either " +
+              "'ping-sweep', 'single-ping' or 'arp-cache" % configfile)
+        error = True
+
+    if conf['hosts']['probe'] == 'ping-sweep' and os.getuid() != 0:
+        print("(E) %s: Need to use sudo or be root for 'ping-sweep'" % configfile)
+        error = True
+
+
     for h in hosts:
         if h not in conf:
             print("(E) %s: Could not find declaration of host '%s'" % (configfile, h))
             error = True
 
+    for h in hosts:
+        if len(conf[h]['waitfor'].split(":")[0].split("/")) != 2:
+            print("[%s] waitfor-variable should be <network>:<prort> where network is CIDR-notation")
+            error = True
     if error:
         sys.exit(1)
 
@@ -98,15 +113,29 @@ def get_vm_ip(conn, host_name):
 
     mac_list = determine_host_macs(conn, host_name)
     for mac in mac_list:
-        cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        output, errors = p.communicate()
-        if output != b'':
-            ip = output.decode('UTF-8').strip('\n')
-            print_v('(I) Found %s' % ip)
-            return ip
-        else:
-            return False
+
+        if config['hosts']['probe'] != "arpwatchd":
+
+            if config['hosts']['probe'] == 'single ping':
+                cmd = "ping -n 1 %s" % config[host_name]['waitfor'][0]
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+            if config['hosts']['probe'] == 'ping-sweep':
+                network = config[host_name]['waitfor'].split(":")[0]
+                print_v("Doing ping sweep of %s" % network)
+
+                cmd = "nmap -T5 -sP %s" % network
+                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+            cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+            output, errors = p.communicate()
+            if output != b'':
+                ip = output.decode('UTF-8').strip('\n')
+                print_v('(I) Found %s' % ip)
+                return ip
+            else:
+                return False
 
 
 def start_vm(conn, host_name):
