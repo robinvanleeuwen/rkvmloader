@@ -122,10 +122,11 @@ def get_vm_ip(conn, host_name):
 
             if config['hosts']['probe'] == 'ping-sweep':
                 network = config[host_name]['waitfor'].split(":")[0]
-                print_v("Doing ping sweep of %s" % network)
+                print_v("(I) Doing ping sweep of %s" % network)
 
                 cmd = "nmap -T5 -sP %s" % network
-                p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+                nmap = subprocess.call(cmd, shell=True, stdout=subprocess.PIPE)
+
 
             cmd = "arp -n | grep %s | awk ' { print $1 }'" % mac
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
