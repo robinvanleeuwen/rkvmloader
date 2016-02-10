@@ -84,13 +84,13 @@ def load_config_file(configfile):
 
 def determine_host_macs(conn, host_name):
     mac_list = []
-    print_v("(I) Detrmining MAC's for %s " % host_name, end="")
+    print_v("(I) Detrmining MAC's for %s..." % host_name, end='')
     vm_xml = conn.lookupByName(host_name).XMLDesc()
     root = ET.fromstring(vm_xml)
     for i in root.findall('./devices/interface'):
         for mac in i.findall('mac'):
             mac_list.append(mac.attrib['address'])
-    print_v("found %s" % mac_list)
+    print_v(" Found %s" % mac_list)
     return mac_list
 
 
@@ -103,11 +103,11 @@ def start_vm(conn, host_name):
     if host_name in get_running_vms(conn):
         print_v('(I) Host %s already running' % host_name)
     else:
-        print_v("(I) Starting %s " % (host_name,))
+        print_v('(I) Starting %s ' % (host_name,))
         conn.lookupByName(host_name).create()
 
     mac_list = determine_host_macs(conn, host_name)
-    print_v("(I) Waiting for ARP cache to be filled... ", end="")
+    print_v('(I) Waiting for ARP cache to be filled... ', end='')
 
     while not up:
 
@@ -117,12 +117,12 @@ def start_vm(conn, host_name):
             output, errors = p.communicate()
             if output != b'':
                 ip = output.decode('UTF-8').strip('\n')
-                print("Found %s" % ip)
+                print('Found %s' % ip)
                 up = True
         time.sleep(1)
 
     if waitfor[0] != 'PASS':
-        print_v("(I) Checking %s port %s on %s... " % (waitfor[0], waitfor[1], ip), end="")
+        print_v('(I) Checking %s port %s on %s... ' % (waitfor[0], waitfor[1], ip), end="")
 
         connected = False
         sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -135,7 +135,7 @@ def start_vm(conn, host_name):
     else:
         print_v('(I) Skipping connection test. IP address fine enough.')
 
-    print_v("(I) Done booting %s" % host_name)
+    print_v('(I) Done booting %s' % host_name)
 
 
 
@@ -179,7 +179,7 @@ def close_and_exit(conn):
 
 
 if __name__ == "__main__":
-    arguments = docopt.docopt(__doc__, version="RKVMLoader 0.1")
+    arguments = docopt.docopt(__doc__, version='RKVMLoader 0.1')
 
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
