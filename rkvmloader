@@ -187,6 +187,7 @@ def stop_vm(conn, host):
         print_v('(I) Stopping %s...' % host, end='')
         if arguments['--force']:
             conn.lookupByName(host).destroy()
+            up = False
         else:
             conn.lookupByName(host).shutdown()
 
@@ -236,4 +237,5 @@ if __name__ == "__main__":
         for host in sequence:
             stop_vm(conn, host)
 
+    show_overview(conn)
     close_and_exit(conn)
