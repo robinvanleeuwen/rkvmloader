@@ -23,7 +23,7 @@ given port (connect to port 22 for exmaple) or continues booting the next VM in 
      -h --help             Show this screen
      -c --config=<config>  Configuration file [default: /etc/rkvmloader.conf]
      --force               Forcefully kill VM's immidiately
-     -t --timeout=<sec>    Force off after <sec> seconds [default: 30]
+     -t --timeout=<sec>    Force off after <sec> seconds [default: 300]
 ```
 
 See rkvmloader.conf for a configration example and documentation
