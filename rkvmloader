@@ -218,7 +218,7 @@ def close_and_exit(conn):
 
 
 if __name__ == "__main__":
-    arguments = docopt.docopt(__doc__, version='RKVMLoader 0.1')
+    arguments = docopt.docopt(__doc__, version='RKVMLoader 0.5')
 
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
