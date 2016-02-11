@@ -81,7 +81,7 @@ def load_config_file(configfile):
         print("(E) %s: Need to use sudo or be root for 'ping-sweep'" % configfile)
         error = True
 
-    if conf['hosts']['probe'] == 'ping-sweep' and not subprocess.call(["/usr/bin/which", "nmadp"]):
+    if conf['hosts']['probe'] == 'ping-sweep' and not subprocess.call(["/usr/bin/which", "nmap"]):
         print("(E) The NMap utility should be installed for ping sweep.")
         error = True
 
@@ -147,11 +147,10 @@ def start_vm(conn, host_name):
 
     waitfor = config[host_name]['waitfor'].split(':')
     ip = ''
-
+    print_v('(I) Starting %s ' % (host_name,))
     if host_name in get_running_vms(conn):
         print_v('(I) Host %s already running' % host_name)
     else:
-        print_v('(I) Starting %s ' % (host_name,))
         conn.lookupByName(host_name).create()
 
     print_v('(I) Getting IP address for %s... ' % host_name)
@@ -219,7 +218,7 @@ def close_and_exit(conn):
 
 
 if __name__ == "__main__":
-    arguments = docopt.docopt(__doc__, version='RKVMLoader 0.1')
+    arguments = docopt.docopt(__doc__, version='RKVMLoader 0.5')
 
     config = load_config_file(arguments['--config'])
     conn = qemu_connect()
