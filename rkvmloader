@@ -147,11 +147,10 @@ def start_vm(conn, host_name):
 
     waitfor = config[host_name]['waitfor'].split(':')
     ip = ''
-
+    print_v('(I) Starting %s ' % (host_name,))
     if host_name in get_running_vms(conn):
         print_v('(I) Host %s already running' % host_name)
     else:
-        print_v('(I) Starting %s ' % (host_name,))
         conn.lookupByName(host_name).create()
 
     print_v('(I) Getting IP address for %s... ' % host_name)
